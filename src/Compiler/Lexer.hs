@@ -1,9 +1,9 @@
 {-# LANGUAGE ViewPatterns #-}
-module Compiler.Lexer (token, Token) where
+module Compiler.Lexer (lexer, Token (..) ) where
 
+import Compiler.Common
 import Data.Char (isDigit, isSpace)
 
-type Name = String
 
 data Token = NewLine
            | LBracket | RBracket
@@ -21,19 +21,10 @@ instance Show Token where
   show (String str) = show str
   show (Var name)   = name
   
-type ErrorMessage = String
-type Result = Either ErrorMessage
-
 
 allowedVarSymbols = ['a'..'z'] ++ ['A'..'Z'] ++ "_" ++ ['0'..'9']
 startVarSymbols   = ['a'..'z'] ++ ['A'..'Z'] ++ "_"
 
-splitWhen :: (a -> Bool) -> [a] -> ([a], [a])
-splitWhen f [] = ([], [])
-splitWhen f (x:xs) = if f x then
-                       ([], x:xs)
-                     else let (fs, rest) = splitWhen f xs in
-                            (x:fs, rest)
 
 prefix :: String -> String -> Maybe String
 prefix "" str = Just str
@@ -41,25 +32,25 @@ prefix _ "" = Nothing
 prefix (p:pr) (s:str) = if p == s then prefix pr str else Nothing
 
 
-token :: String -> Result [Token]
-token "" = Right []
+lexer :: String -> Result [Token]
+lexer "" = Right []
 
-token (prefix "\n" -> Just rest) = (:) NewLine  <$> token rest
-token (prefix "("  -> Just rest) = (:) LBracket <$> token rest
-token (prefix ")"  -> Just rest) = (:) RBracket <$> token rest
-token (prefix "->" -> Just rest) = (:) Arrow    <$> token rest
-token (prefix ":=" -> Just rest) = (:) Assign   <$> token rest
+lexer (prefix "\n" -> Just rest) = (:) NewLine  <$> lexer rest
+lexer (prefix "("  -> Just rest) = (:) LBracket <$> lexer rest
+lexer (prefix ")"  -> Just rest) = (:) RBracket <$> lexer rest
+lexer (prefix "->" -> Just rest) = (:) Arrow    <$> lexer rest
+lexer (prefix ":=" -> Just rest) = (:) Assign   <$> lexer rest
 
-token (s:str) | isSpace s = token str
+lexer (s:str) | isSpace s = lexer str
               | (isDigit s || s == '-') = let
                   (num, rest) = splitWhen (not . isDigit) str
                   in
-                    (:) (Int $ read $ s:num) <$> token rest
+                    (:) (Int $ read $ s:num) <$> lexer rest
 
               | (s `elem` startVarSymbols) = let
                   (name, rest) = splitWhen (not . (`elem` allowedVarSymbols)) str
                   in
-                    (:) (Var (s:name)) <$> token rest
+                    (:) (Var (s:name)) <$> lexer rest
                                         
               | (s == '"') = let
                   (string, rest) = splitWhen (== '"') str
@@ -67,7 +58,7 @@ token (s:str) | isSpace s = token str
                     if null rest || head rest /= '"' then
                       Left $ "Unclosed String: \"" <> string
                     else
-                      (:) (String string) <$> token (tail rest)
+                      (:) (String string) <$> lexer (tail rest)
 
 
-token (x:xs) = Left $ "Parse error on symbol '" <> [x] <> "'"
+lexer (x:xs) = Left $ "Parse error on symbol '" <> [x] <> "'"
