@@ -3,34 +3,46 @@ module Graph where
 import qualified Data.Map as M
 
 type VarName = String
-data Var = (String, Redex)
-data Vars = M.Map VarName Redex
+type Var = (String, Redex)
+type Vars = M.Map VarName Redex
 
-data Type = S | I | L | Fn Type Type
+type FnName = String
+type Fn = (FnName, Redex)
+type Fns = M.Map FnName Redex
+
+
+data Action = Print 
+
+
+              
+data Redex = Function Redex
+           | AtomI Int
+           | AtomS String          
+           | AtomV VarName
+
+
+
 {-  -----Under Construcion-----
 
 language syntax:
 
-unnamed lambda function:
+lambda function:
 (<varname> -> <expr>)
 
-named lambda function:
+names (binds):
+<name> := <expr>
+
+also can be used for function
 <funname> := <varname> -> <expr>
+
+
 
 function appliance:
 <funname> <arg>
 or
-<unnamed fn> <arg>
+<unnamed fn> <arg>  
 
 
-
-
-
-
-
-data Function = Print Redex | Add Redex Redex
-data Redex = Redex Vars | AtomS String | AtomI Int | AtomF Function
+-- data Type = S | I | L | Fn Type Type
 -}
-
-data Function = Print Redex | Add Redex Redex
 
