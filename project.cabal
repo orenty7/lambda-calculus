@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 27abcd29245f4b78db54975c0420dca51928d792a48b671970a8572509617ec0
+-- hash: 77f47d633abab873a9348cabb99444f90bf88b71dc2c78d41d76d0f26f3d06e8
 
 name:           project
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Compiler.Lexer
+      Compiler.Parser
       Graph
       Lib
   other-modules:

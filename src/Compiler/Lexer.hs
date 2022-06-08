@@ -1,19 +1,32 @@
 {-# LANGUAGE ViewPatterns #-}
-module Compiler.Lexer where
+module Compiler.Lexer (token, Token) where
 
-import Data.Char (isDigit)
-import qualified Data.Map as M
+import Data.Char (isDigit, isSpace)
 
 type Name = String
 
-data Token = LBracket | RBracket | Arrow | Assign | Int Int | String String | Var Name deriving (Eq, Show)
+data Token = NewLine
+           | LBracket | RBracket
+           | Arrow | Assign
+           | Int Int | String String | Var Name deriving (Eq)
 
+
+instance Show Token where
+  show NewLine      = "\\n"
+  show LBracket     = "("
+  show RBracket     = ")"
+  show Arrow        = "->"
+  show Assign       = ":="
+  show (Int int)    = show int
+  show (String str) = show str
+  show (Var name)   = name
+  
 type ErrorMessage = String
 type Result = Either ErrorMessage
 
 
 allowedVarSymbols = ['a'..'z'] ++ ['A'..'Z'] ++ "_" ++ ['0'..'9']
-startVarSymbols = ['a'..'z'] ++ ['A'..'Z'] ++ "_"
+startVarSymbols   = ['a'..'z'] ++ ['A'..'Z'] ++ "_"
 
 splitWhen :: (a -> Bool) -> [a] -> ([a], [a])
 splitWhen f [] = ([], [])
@@ -30,14 +43,15 @@ prefix (p:pr) (s:str) = if p == s then prefix pr str else Nothing
 
 token :: String -> Result [Token]
 token "" = Right []
-token (' ':xs) = token xs
 
-token (prefix "("  -> Just rest) = (LBracket:) <$> token rest
-token (prefix ")"  -> Just rest) = (RBracket:) <$> token rest
-token (prefix "->" -> Just rest) = (Arrow:)    <$> token rest
-token (prefix ":=" -> Just rest) = (Assign:)   <$> token rest
+token (prefix "\n" -> Just rest) = (:) NewLine  <$> token rest
+token (prefix "("  -> Just rest) = (:) LBracket <$> token rest
+token (prefix ")"  -> Just rest) = (:) RBracket <$> token rest
+token (prefix "->" -> Just rest) = (:) Arrow    <$> token rest
+token (prefix ":=" -> Just rest) = (:) Assign   <$> token rest
 
-token (s:str) | (isDigit s || s == '-') = let
+token (s:str) | isSpace s = token str
+              | (isDigit s || s == '-') = let
                   (num, rest) = splitWhen (not . isDigit) str
                   in
                     (:) (Int $ read $ s:num) <$> token rest
@@ -55,9 +69,5 @@ token (s:str) | (isDigit s || s == '-') = let
                     else
                       (:) (String string) <$> token (tail rest)
 
+
 token (x:xs) = Left $ "Parse error on symbol '" <> [x] <> "'"
-
-  
-
-
-      
