@@ -86,6 +86,7 @@ convert (L.Var    name) = Var    name
 
 parser :: [L.Token] -> Result AST
 parser [] = return $ Sequence []
+parser (L.NewLine:xs) = parser xs
 parser raw@((L.Var _):(L.Arrow):_) = do
   (name, body', rest) <- lambda raw
   body <- parser body'
@@ -116,7 +117,7 @@ parser raw@(L.LBracket:_) = do
   (block', rest') <- brackets raw
   block <- parser block'
   rest <- parser rest'
-  return $ Sequence $ block:[rest]
+  return $ merge block rest
 
 parser (L.RBracket:_) = Left "Unexpected Right bracket"
 parser (x:xs) = (parser xs) >>= return.merge (convert x)

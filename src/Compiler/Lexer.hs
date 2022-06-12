@@ -26,12 +26,6 @@ allowedVarSymbols = ['a'..'z'] ++ ['A'..'Z'] ++ "_" ++ ['0'..'9']
 startVarSymbols   = ['a'..'z'] ++ ['A'..'Z'] ++ "_"
 
 
-prefix :: String -> String -> Maybe String
-prefix "" str = Just str
-prefix _ "" = Nothing
-prefix (p:pr) (s:str) = if p == s then prefix pr str else Nothing
-
-
 lexer :: String -> Result [Token]
 lexer "" = Right []
 

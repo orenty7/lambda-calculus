@@ -2,21 +2,17 @@ module Main where
 
 import Compiler.Lexer
 import Compiler.Parser
+import Compiler.Compiler
+import Compiler.Runtime
 
-readAll :: IO String
-readAll = do
-  a <- getLine
-  if null a then
-    return []
-    else do
-      rest <- readAll  
-      return $ a <> rest
-    
-    
+
+
 
 main :: IO ()
 main = do
-  
-  str <- getContents
-  
-  print $ lexer str >>= parser 
+  program_raw <- getContents
+  let program = lexer program_raw >>= parser >>= return.compiler
+  case program of
+    Left err_msg -> putStrLn $ "Compilation error: " <> err_msg
+    Right program -> run program
+      

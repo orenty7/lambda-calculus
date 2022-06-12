@@ -1,3 +1,8 @@
-W := x -> x x
-f := x -> x
-W f
+true  := x -> y -> x
+false := x -> y -> y
+
+false (ioprint 30) (true (ioprint 10) (ioprint 20))
+
+
+
+
