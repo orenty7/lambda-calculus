@@ -32,4 +32,4 @@ compiler (Sequence ((P.Var name):xs)) =
     apply (R.Var name) xs    
 
 
-compiler hz = R.String $ show hz
+-- compiler hz = R.String $ show hz

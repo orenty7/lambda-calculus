@@ -1,7 +1,13 @@
-true  := x -> y -> x
-false := x -> y -> y
+f := "hello"
 
-false (ioprint 30) (true (ioprint 10) (ioprint 20))
+ioprint f
+
+
+
+
+
+
+
 
 
 

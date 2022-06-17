@@ -3,12 +3,13 @@ module Compiler.Runtime where
 import Compiler.Common
 
 import Data.Map as M
--- import Control.Monad.State.Lazy
+import Control.Monad.State
 
 type Vars = M.Map Name RedexTree
 type Finished = Bool
-type State = (Vars, RedexTree, Finished)
 type Output = String 
+type Env = (Output, Vars)
+
 data RedexTree = Lambda Name RedexTree
                | String String | Int Int | Var Name | None
                | Application RedexTree RedexTree deriving (Eq, Show)
@@ -16,62 +17,57 @@ data RedexTree = Lambda Name RedexTree
 
 
 
--- reduction :: RedexTree -> RedexTree -> RedexTree
+-- a -> m b
 
 
-eval :: Vars -> RedexTree -> Result (Output, State)
-eval vars (Application wrapped_fn arg) = case wrapped_fn of
-
-  Lambda name body -> eval (M.insert name arg vars) body
-
-  Var name -> case prefix "io" name of
-                Just sysfn -> 
-                  case sysfn of
-                    "print" -> do
-                      return $ (show arg, (vars, arg, False))
-                    
-                Nothing -> 
-                  case M.lookup name vars of
-                    Nothing -> Left $ "Error, var " <> name <> " not found"
-                    Just fn -> eval vars (Application fn arg)
-
-  raw@(Application wrapped_fn' arg') -> do
-    (output', (vars', tree', _)) <- eval vars raw
-    (output, (vars'', tree'', finished)) <- eval vars' (Application tree' arg)
-
-    return (output' <> output, (vars'', tree'', finished))
-  _ -> Left $ "Error, incorrect application\n" <>
-       show wrapped_fn <> "\n" <>
-       show arg
-                                         
-
-eval vars (Var name) = case M.lookup name vars of
-  Nothing -> Left $ "Error, var " <> name <> " not found"
-  Just ast -> eval vars ast
-
-eval vars ast = return ("", (vars, ast, True))
+addvar :: Name -> RedexTree -> StateT Env Result ()
+addvar name value = StateT (\raw@(output, vars) -> return ((), (output, M.insert name value vars)))
 
 
-run' :: Vars -> RedexTree -> IO ()
-run' vars redex = let
-  result = eval vars redex
-  in
-    case result of
-      Right (output, (vars', redex', finished)) -> do
-        putStrLn output
-        if not finished then
-          run' vars' redex'
-        else
-          return ()
-      Left err_msg ->
-        print $ "An error occured: " <> err_msg
+getvar :: Name -> StateT Env Result RedexTree
+getvar name = StateT (\raw@(output, vars) ->  case M.lookup name vars of
+  Nothing -> Left $ "Error, var " <> name <> " is undefined"
+  Just var -> return (var, raw))
 
 
+eval :: RedexTree -> StateT Env Result RedexTree 
+eval raw@(None      ) = return raw
+eval raw@(Int _     ) = return raw
+eval raw@(String _  ) = return raw
+eval raw@(Lambda _ _) = return raw
+eval raw@(Var name) = do 
+    var <- getvar name
+    eval var
+    
+    
+eval (Application fn' arg') = do
+  arg <- eval arg'
+  fn <- eval fn'
+  
+  case fn of
+    Lambda varname body -> do
+      addvar varname arg
+      eval body
+      
+    
+  
+    
 run :: RedexTree -> IO ()
-run = run' M.empty
+run expr = case runStateT (eval expr) ("", M.empty) of
+  Left err_msg -> putStrLn $ "Runtime error: " <> err_msg
+  Right (_, (output, _)) -> putStrLn output
+
+
+
     
 
-  
 
   
+
+
+
+  
+
+
+
 

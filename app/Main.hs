@@ -14,5 +14,5 @@ main = do
   let program = lexer program_raw >>= parser >>= return.compiler
   case program of
     Left err_msg -> putStrLn $ "Compilation error: " <> err_msg
-    Right program -> run program
+    Right program -> run program 
       
