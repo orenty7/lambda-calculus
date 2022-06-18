@@ -1,3 +1,7 @@
+zero := f -> z -> z
+one  := f -> z -> f z
+two  := f -> z -> f (f z)
+
 f := "hello"
 
 ioprint f
