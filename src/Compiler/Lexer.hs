@@ -8,7 +8,7 @@ import Data.Char (isDigit, isSpace)
 data Token = NewLine
            | LBracket | RBracket
            | Arrow | Assign
-           | Int Int | String String | Var Name deriving (Eq)
+           | String String | Var Name deriving (Eq)
 
 
 instance Show Token where
@@ -17,7 +17,6 @@ instance Show Token where
   show RBracket     = ")"
   show Arrow        = "->"
   show Assign       = ":="
-  show (Int int)    = show int
   show (String str) = show str
   show (Var name)   = name
   
@@ -36,11 +35,6 @@ lexer (prefix "->" -> Just rest) = (:) Arrow    <$> lexer rest
 lexer (prefix ":=" -> Just rest) = (:) Assign   <$> lexer rest
 
 lexer (s:str) | isSpace s = lexer str
-              | (isDigit s || s == '-') = let
-                  (num, rest) = splitWhen (not . isDigit) str
-                  in
-                    (:) (Int $ read $ s:num) <$> lexer rest
-
               | (s `elem` startVarSymbols) = let
                   (name, rest) = splitWhen (not . (`elem` allowedVarSymbols)) str
                   in

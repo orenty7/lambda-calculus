@@ -11,7 +11,7 @@ type Output = String
 type Env = (Output, Vars)
 
 data RedexTree = Lambda Name RedexTree
-               | String String | Int Int | Var Name | None
+               | String String | Var Name | None
                | Application RedexTree RedexTree deriving (Eq, Show)
 
 
@@ -20,13 +20,13 @@ data RedexTree = Lambda Name RedexTree
 -- a -> m b
 
 
-system = ["print"]
+system = ["print", "concat"]
 
 fail' :: ErrorMessage -> StateT Env Result RedexTree
 fail' err_msg = StateT (\state -> Left err_msg)
 
-sysprint :: String -> StateT Env Result RedexTree
-sysprint str = StateT (\(output, vars) -> return (None, (output ++ str, vars)))
+print' :: String -> StateT Env Result RedexTree
+print' str = StateT (\(output, vars) -> return (String str, (output ++ str, vars)))
   
 addvar :: Name -> RedexTree -> StateT Env Result ()
 addvar name value = StateT (\raw@(output, vars) -> return ((), (output, M.insert name value vars)))
@@ -39,52 +39,26 @@ getvar name = StateT (\raw@(output, vars) ->  case M.lookup name vars of
 
 eval :: RedexTree -> StateT Env Result RedexTree 
 eval raw@(None      ) = return raw
-eval raw@(Int _     ) = return raw
 eval raw@(String _  ) = return raw
 eval raw@(Lambda _ _) = return raw
-eval raw@(Var name) = case prefix "io" name of
-  Just rest -> if rest `elem` system then
-                 return $ Var rest
-               else
-                 fail' $ "Unknown system function: " <> name        
-  Nothing -> do 
-    var <- getvar name
-    eval var
-    
+eval raw@(Var name) = do 
+  var <- getvar name
+  eval var    
     
 eval (Application fn' arg') = do
   arg <- eval arg'
   fn <- eval fn'
-  
+    
   case fn of
-    Lambda varname body -> do
+    Lambda varname body -> do  
       addvar varname arg
       eval body
-    Var sysfun -> do
-      if sysfun == "print" then
-        sysprint (show arg)
-        else
-        fail' "Incorrect var in expression. Runtime env error"
-        
-        
-      
-    
+    String str -> do
+      print' str
+      eval (String str)
+
 run :: RedexTree -> IO ()
 run expr = case runStateT (eval expr) ("", M.empty) of
   Left err_msg -> putStrLn $ "Runtime error: " <> err_msg
   Right (_, (output, _)) -> putStrLn output
-
-
-
-    
-
-
-  
-
-
-
-  
-
-
-
 

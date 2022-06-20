@@ -12,7 +12,6 @@ apply fn (x:xs) = apply (Application fn (compiler x)) xs
 compiler :: AST -> RedexTree
 compiler (P.Lambda name ast) = R.Lambda name (compiler ast)
 compiler (P.String str)      = R.String str
-compiler (P.Int int)         = R.Int int
 compiler (P.Var var)         = R.Var var
 compiler (Sequence [x]) = compiler x
 compiler (Sequence ((Assign name ast):xs)) =
@@ -22,8 +21,11 @@ compiler (Sequence ((Assign name ast):xs)) =
   in
     Application (R.Lambda name body) arg
 
+compiler (Sequence ((P.String str):xs)) =
+  apply (R.String str) xs
 compiler (Sequence ((P.Lambda name ast):xs)) =
-    apply (R.Lambda name (compiler ast)) xs
+  apply (R.Lambda name (compiler ast)) xs
+
 
 compiler (Sequence ((P.Var name):xs)) =
   if null xs then
@@ -32,4 +34,4 @@ compiler (Sequence ((P.Var name):xs)) =
     apply (R.Var name) xs    
 
 
--- compiler hz = R.String $ show hz
+

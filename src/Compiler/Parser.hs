@@ -14,7 +14,7 @@ import qualified Data.Map as M
 
 
 data AST = Assign Name AST | Lambda Name AST
-         | String String | Int Int | Var Name
+         | String String | Var Name
          | Sequence [AST]
          deriving (Eq, Show)
 
@@ -78,7 +78,7 @@ merge x xs = Sequence [x, xs]
 
 
 convert :: L.Token -> AST
-convert (L.Int    int ) = Int    int
+
 convert (L.String str ) = String str
 convert (L.Var    name) = Var    name
 

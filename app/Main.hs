@@ -6,6 +6,14 @@ import Compiler.Compiler
 import Compiler.Runtime
 
 
+get :: String -> IO RedexTree
+get filename = do
+  program_raw <- readFile filename
+  let (Right program) = lexer program_raw >>= parser >>= return.compiler
+
+  return program
+    
+
 
 
 main :: IO ()

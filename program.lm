@@ -1,18 +1,6 @@
 zero := f -> z -> z
 one  := f -> z -> f z
-two  := f -> z -> f (f z)
+five := f -> z -> f (f (f (f (f z))))
 
-f := "hello"
-
-ioprint f
-
-
-
-
-
-
-
-
-
-
+five (x -> "*" x) ""
 
